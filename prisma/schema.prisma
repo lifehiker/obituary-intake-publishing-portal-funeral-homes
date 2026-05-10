@@ -1,0 +1,251 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum ObituaryStatus {
+  SUBMITTED
+  IN_REVIEW
+  DRAFTED
+  AWAITING_APPROVAL
+  APPROVED
+  PUBLISHED
+}
+
+enum UserRole {
+  OWNER
+  STAFF
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+enum AssetType {
+  PHOTO
+  LOGO
+  DOCUMENT
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INACTIVE
+}
+
+model User {
+  id           String      @id @default(cuid())
+  name         String
+  email        String      @unique
+  emailVerified DateTime?
+  image        String?
+  passwordHash String
+  role         UserRole    @default(STAFF)
+  funeralHomeId String?
+  locationId   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  funeralHome  FuneralHome? @relation(fields: [funeralHomeId], references: [id], onDelete: SetNull)
+  location     Location?   @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  accounts     Account[]
+  sessions     Session[]
+  auditLogs    AuditLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model FuneralHome {
+  id                    String         @id @default(cuid())
+  name                  String
+  slug                  String         @unique
+  logoUrl               String?
+  primaryColor          String         @default("#0F4C5C")
+  supportEmail          String?
+  phone                 String?
+  introText             String?
+  customApprovalMessage String?
+  onboardingComplete    Boolean        @default(false)
+  planName              String         @default("Starter")
+  trialEndsAt           DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  locations             Location[]
+  submissions           Submission[]
+  obituaries            Obituary[]
+  assets                Asset[]
+  staff                 User[]
+  subscriptions         Subscription[]
+}
+
+model Location {
+  id            String       @id @default(cuid())
+  funeralHomeId String
+  name          String
+  slug          String
+  city          String
+  state         String
+  addressLine   String?
+  phone         String?
+  funeralHome   FuneralHome  @relation(fields: [funeralHomeId], references: [id], onDelete: Cascade)
+  users         User[]
+  submissions   Submission[]
+  obituaries    Obituary[]
+
+  @@unique([funeralHomeId, slug])
+}
+
+model Submission {
+  id               String         @id @default(cuid())
+  funeralHomeId    String
+  locationId       String
+  contactName      String
+  contactEmail     String
+  contactPhone     String?
+  deceasedName     String
+  title            String
+  dateOfBirth      DateTime?
+  dateOfDeath      DateTime?
+  serviceInfoJson  String
+  survivorInfoJson String
+  charityInfo      String?
+  clergyName       String?
+  biographyRaw     String
+  status           ObituaryStatus @default(SUBMITTED)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  funeralHome      FuneralHome    @relation(fields: [funeralHomeId], references: [id], onDelete: Cascade)
+  location         Location       @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  obituary         Obituary?
+  assets           Asset[]
+}
+
+model Obituary {
+  id                 String         @id @default(cuid())
+  funeralHomeId      String
+  locationId         String
+  submissionId       String         @unique
+  slug               String
+  title              String
+  summary            String?
+  biographyHtml      String
+  serviceDetailsHtml String
+  charityDetailsHtml String?
+  survivorDetails    String
+  status             ObituaryStatus @default(SUBMITTED)
+  approvalContact    String?
+  approvalEmail      String?
+  familyMessage      String?
+  publishedAt        DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  funeralHome        FuneralHome    @relation(fields: [funeralHomeId], references: [id], onDelete: Cascade)
+  location           Location       @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  submission         Submission     @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  approvals          ApprovalRequest[]
+  assets             Asset[]
+  auditLogs          AuditLog[]
+
+  @@unique([funeralHomeId, slug])
+}
+
+model ApprovalRequest {
+  id             String         @id @default(cuid())
+  obituaryId     String
+  token          String         @unique
+  recipientName  String?
+  recipientEmail String
+  message        String?
+  status         ApprovalStatus @default(PENDING)
+  requestedAt    DateTime       @default(now())
+  respondedAt    DateTime?
+  obituary       Obituary       @relation(fields: [obituaryId], references: [id], onDelete: Cascade)
+  comments       ApprovalComment[]
+}
+
+model ApprovalComment {
+  id                String          @id @default(cuid())
+  approvalRequestId String
+  authorName        String
+  authorEmail       String?
+  body              String
+  createdAt         DateTime        @default(now())
+  approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+}
+
+model Asset {
+  id            String      @id @default(cuid())
+  funeralHomeId String
+  obituaryId    String?
+  submissionId  String?
+  url           String
+  type          AssetType   @default(PHOTO)
+  alt           String?
+  createdAt     DateTime    @default(now())
+  funeralHome   FuneralHome @relation(fields: [funeralHomeId], references: [id], onDelete: Cascade)
+  obituary      Obituary?   @relation(fields: [obituaryId], references: [id], onDelete: Cascade)
+  submission    Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  obituaryId String
+  actorUserId String?
+  action     String
+  metadataJson String?
+  createdAt  DateTime @default(now())
+  obituary   Obituary @relation(fields: [obituaryId], references: [id], onDelete: Cascade)
+  actor      User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  funeralHomeId        String             @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  status               SubscriptionStatus @default(TRIALING)
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  funeralHome          FuneralHome        @relation(fields: [funeralHomeId], references: [id], onDelete: Cascade)
+}
