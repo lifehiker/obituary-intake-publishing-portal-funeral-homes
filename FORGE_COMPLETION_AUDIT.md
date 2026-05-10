@@ -128,6 +128,10 @@ This audit maps the major PRD requirements to the concrete implementation in thi
   - `npm run lint`
 - Production build passed
   - `npm run build`
+- Standalone output emitted and production-style runtime booted
+  - `.next/standalone/server.js`
+  - `Dockerfile`
+  - `docker-entrypoint.sh`
 - Dev server started successfully
   - `npm run dev`
 - Primary public routes returned `200`
@@ -139,10 +143,21 @@ This audit maps the major PRD requirements to the concrete implementation in thi
   - `/obituaries/harbor-house-funeral-home/margaret-louise-carter`
 - Protected dashboard redirected unauthenticated users and loaded with authenticated seeded credentials
   - `/dashboard`
+- Auth.js CSRF and credentials sign-in were verified successfully
+  - `/api/auth/csrf`
+  - `/api/auth/callback/credentials`
 - Export API returned seeded CSV output
   - `/api/export/obituaries`
+- Approval workflow was exercised against the rendered Server Action form and persisted to the database
+  - `/approve/demo-approval-token`
+- Intake workflow was exercised against the rendered Server Action form and persisted to the database before reseeding demo data
+  - `/submit/harbor-house-funeral-home`
 - Billing fallback logic was verified directly
   - `src/lib/billing.ts`
+- Deployment startup failures were fixed by removing the invalid Prisma CLI flag, copying `prisma.config.ts` into the runtime image, and enabling trusted hosts for self-hosted Auth.js
+  - `Dockerfile`
+  - `docker-entrypoint.sh`
+  - `src/auth.ts`
 
 ## External-Credential Items Intentionally Deferred
 
@@ -153,4 +168,4 @@ This audit maps the major PRD requirements to the concrete implementation in thi
 - PostHog analytics requires project credentials.
   - The app still runs because analytics calls degrade to no-ops.
 - Docker image build could not be executed in this environment because Docker socket access is denied.
-  - The Docker assets are present and the app’s standalone build already passes locally.
+  - The Docker assets are present, the standalone runtime was booted locally, and the remaining gap is daemon access rather than app code.
