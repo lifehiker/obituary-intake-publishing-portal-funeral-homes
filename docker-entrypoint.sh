@@ -6,6 +6,11 @@ if [ -n "${DATABASE_URL:-}" ]; then
     cat /tmp/prisma-db-push.log
     exit 1
   }
+
+  npm run db:bootstrap >/tmp/prisma-bootstrap.log 2>&1 || {
+    cat /tmp/prisma-bootstrap.log
+    exit 1
+  }
 fi
 
 exec node server.js

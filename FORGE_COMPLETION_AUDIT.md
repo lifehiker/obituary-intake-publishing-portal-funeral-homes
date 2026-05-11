@@ -18,6 +18,7 @@ This audit maps the major PRD requirements to the concrete implementation in thi
   - `Dockerfile`
   - `.dockerignore`
   - `docker-entrypoint.sh`
+  - `prisma/bootstrap.ts`
 
 ## Data Model
 
@@ -28,6 +29,8 @@ This audit maps the major PRD requirements to the concrete implementation in thi
   - `src/lib/prisma.ts`
 - Seeded demo data for funeral home, users, approval token, obituaries, and audit trail
   - `prisma/seed.ts`
+  - `prisma/bootstrap.ts`
+  - `prisma/seed-data.ts`
 
 ## Auth And Access Control
 
@@ -124,6 +127,9 @@ This audit maps the major PRD requirements to the concrete implementation in thi
   - `npx prisma db push --accept-data-loss`
 - Demo data seeded
   - `npm run db:seed`
+- Fresh-deployment bootstrap verified on an empty SQLite database
+  - `npm run db:bootstrap`
+  - `docker-entrypoint.sh`
 - Lint passed
   - `npm run lint`
 - Production build passed
@@ -148,16 +154,13 @@ This audit maps the major PRD requirements to the concrete implementation in thi
   - `/api/auth/callback/credentials`
 - Export API returned seeded CSV output
   - `/api/export/obituaries`
-- Approval workflow was exercised against the rendered Server Action form and persisted to the database
-  - `/approve/demo-approval-token`
-- Intake workflow was exercised against the rendered Server Action form and persisted to the database before reseeding demo data
-  - `/submit/harbor-house-funeral-home`
 - Billing fallback logic was verified directly
   - `src/lib/billing.ts`
-- Deployment startup failures were fixed by removing the invalid Prisma CLI flag, copying `prisma.config.ts` into the runtime image, and enabling trusted hosts for self-hosted Auth.js
+- Deployment startup failures were fixed by removing the invalid Prisma CLI flag, copying `prisma.config.ts` into the runtime image, and bootstrapping demo data into empty databases on first startup
   - `Dockerfile`
   - `docker-entrypoint.sh`
-  - `src/auth.ts`
+  - `prisma/bootstrap.ts`
+  - `prisma/seed-data.ts`
 
 ## External-Credential Items Intentionally Deferred
 

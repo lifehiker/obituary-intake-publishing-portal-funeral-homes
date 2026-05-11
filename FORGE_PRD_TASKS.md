@@ -91,6 +91,7 @@ Status key: `[ ]` pending, `[-]` in progress, `[x]` complete
 - [x] Transactional email via Resend with lazy initialization and logged fallback when credentials are absent.
 - [x] Storage/uploads via UploadThing or safe local/mock asset fallback when credentials are absent.
 - [x] Analytics via PostHog-safe client helpers or no-op fallback when keys are absent.
+- [x] Fresh-deployment demo bootstrap for empty databases so seeded demo routes and sample auth still work after first boot.
 
 ## Marketing / SEO
 
@@ -105,6 +106,7 @@ Status key: `[ ]` pending, `[-]` in progress, `[x]` complete
 - [x] `.dockerignore`.
 - [x] Standalone Next.js build support.
 - [x] Zero-config startup behavior with safe default env handling.
+- [x] Prisma 7-compatible container startup without invalid CLI flags.
 
 ## Verification
 
@@ -123,6 +125,6 @@ Status key: `[ ]` pending, `[-]` in progress, `[x]` complete
 - `npm run build` passes and emits `.next/standalone/server.js`.
 - `npm run dev` starts successfully and public, auth, approval, obituary, and dashboard routes respond correctly.
 - Credentials auth was verified through the Auth.js callback endpoint with the seeded owner account.
-- The intake and approval workflows were exercised by posting the rendered Server Action forms against the running app.
-- The production-style standalone runtime was started through `docker-entrypoint.sh`, including Prisma schema initialization and Auth.js CSRF verification.
+- The export API returned seeded obituary CSV data and the billing API returned the expected contact-sales fallback without Stripe credentials.
+- The production-style standalone runtime was started through `docker-entrypoint.sh` against a fresh empty SQLite file, including Prisma schema initialization and idempotent demo bootstrap.
 - Docker CLI is installed in this environment, but Docker daemon access is denied, so `docker build .` could not be executed here.
